@@ -1,0 +1,223 @@
+{
+  "product_identity": {
+    "brand": "JOOLA",
+    "product_name": "JOOLA Tyson McGuffin Magnus CAS 14mm Pickleball Paddle",
+    "model": "Magnus CAS",
+    "series": "Magnus",
+    "sku": "17022",
+    "upc": "4002560170229",
+    "product_category": "Pickleball Paddle",
+    "product_type": "Pickleball Paddle"
+  },
+  "breadcrumbs": [
+    "Home",
+    "Pickleball",
+    "Paddles",
+    "Magnus Series",
+    "JOOLA Tyson McGuffin Magnus CAS 14mm Pickleball Paddle"
+  ],
+  "images": {
+    "scraped_images": [
+      {
+        "url": "https://joola.com/cdn/shop/files/TysonMcGuffinMagnusCAS14mmPickleballPaddle-Web-01.jpg?v=1720201648",
+        "alt": "JOOLA Tyson McGuffin Magnus CAS 14mm Pickleball Paddle - Front View with Lion Graphic",
+        "type": "product"
+      },
+      {
+        "url": "https://joola.com/cdn/shop/files/TysonMcGuffinMagnusCAS14mmPickleballPaddle-Web-05.jpg?v=1720201723",
+        "alt": "JOOLA Magnus CAS 14mm Pickleball Paddle - Angled View",
+        "type": "product"
+      },
+      {
+        "url": "https://joola.com/cdn/shop/files/TysonMcGuffinMagnusCAS14mmPickleballPaddle-Web-03.jpg?v=1720201710",
+        "alt": "JOOLA Magnus CAS 14mm Pickleball Paddle - Paddle Face Close Up",
+        "type": "product"
+      },
+      {
+        "url": "https://joola.com/cdn/shop/files/TysonMcGuffinMagnusCAS14mmPickleballPaddle-Web-02.jpg?v=1720201692",
+        "alt": "JOOLA Magnus CAS 14mm Pickleball Paddle - Back View",
+        "type": "product"
+      },
+      {
+        "url": "https://joola.com/cdn/shop/files/Magnus_CAS_2.jpg?v=1757599266",
+        "alt": "JOOLA Magnus CAS Pickleball Paddle - Dimensions and Weight Diagram",
+        "type": "product"
+      },
+      {
+        "url": "https://joola.com/cdn/shop/files/Magnus_CAS_3.jpg?v=1757599266",
+        "alt": "JOOLA Magnus CAS Pickleball Paddle - Size Comparison View",
+        "type": "product"
+      },
+      {
+        "url": "https://joola.com/cdn/shop/files/Magnus_CAS_4.jpg?v=1757599266",
+        "alt": "JOOLA Magnus CAS Pickleball Paddle - Black Handle and Gold Blade Detail",
+        "type": "product"
+      }
+    ],
+    "lifestyle_images": [],
+    "feature_images": []
+  },
+  "pricing": {
+    "price": "74.95",
+    "compare_at_price": "129.95",
+    "currency": "USD"
+  },
+  "stock_status": "in_stock",
+  "value_badges": [
+    "Free Shipping on orders over $50",
+    "USAPA Approved",
+    "NFC Chip Extended Warranty"
+  ],
+  "short_description": "The JOOLA Tyson McGuffin Magnus CAS 14mm Pickleball Paddle features an edgeless design with double frame carbon fiber construction for enhanced performance and stability.",
+  "long_description": "Emblazoned with an eye-catching lion graphic on its paddle face, the JOOLA Magnus CAS 14mm Pickleball Paddle was designed to highlight the distinctive roar of pickleball's most electrifying man, Tyson McGuffin. Engineered with JOOLA's first edgeless design, the Magnus CAS uses double frame carbon fiber construction to increase performance and stability. Featuring a 14mm core and Carbon Abrasion Surface (CAS) technology that utilizes a multi-step abrasion sand-blasted process for increased spin, this paddle is lightweight at an average of 7.8oz allowing for swifter swings. The elongated shape provides a longer hitting surface with a shorter handle for added power and reach, while the enlarged sweet spot enhances shot precision. The Magnus CAS comes with an embedded NFC chip that unlocks an extended 12-month warranty through an easy-to-navigate registration process.",
+  "about_this_item": [
+    "Engineered with JOOLA's first edgeless design using double frame carbon fiber construction to increase durability, stability, and create a larger hitting area.",
+    "Carbon Abrasion Surface (CAS) technology uses a multi-step abrasion sand-blasted process for a unique textured surface that increases spin on every shot.",
+    "Elongated Magnus shape combines a longer hitting surface with a shorter handle for added power and reach during play.",
+    "Lightweight design averaging 7.8oz allows for swifter swings and quicker reaction times at the net.",
+    "Features an embedded NFC chip that unlocks an extended 12-month warranty through the JOOLA Connect registration process.",
+    "USAPA Approved for tournament play with a rating of 92 for Control, Power, and Spin."
+  ],
+  "key_features": [
+    {
+      "title": "Edgeless Design",
+      "description": "Engineered with a double frame carbon fiber construction that eliminates the edge guard, increasing durability and strength while creating a larger hitting area. The paddle stays lightweight for faster swings with no edge guard interference."
+    },
+    {
+      "title": "Carbon Abrasion Surface",
+      "description": "Our CAS technology utilizes a multi-step abrasion sand-blasted process, creating a unique, textured surface across the entire paddle face that grips the ball for exceptional spin generation."
+    },
+    {
+      "title": "Elongated Magnus Shape",
+      "description": "The Magnus elongated shape provides a longer hitting surface combined with a shorter handle, giving players added power and extended reach for aggressive baseline play and decisive shots."
+    },
+    {
+      "title": "14mm Response Core",
+      "description": "The 14mm polymer core delivers a balanced combination of power and control, offering a responsive feel with a 92/92/92 rating across Control, Power, and Spin metrics."
+    },
+    {
+      "title": "NFC Chip Technology",
+      "description": "An embedded NFC chip in the handle allows players to tap their phone to authenticate the paddle, unlock exclusive product experiences, and register for an extended 12-month warranty through JOOLA Connect."
+    },
+    {
+      "title": "Feel-Tec Pure Grip",
+      "description": "The 5-inch Feel-Tec Pure grip provides a comfortable, secure hold with optimal cushioning, allowing for confident handling and precise shot placement during extended play sessions."
+    }
+  ],
+  "features_table": [
+    {
+      "label": "Surface",
+      "value": "Carbon Abrasion (CAS)"
+    },
+    {
+      "label": "Core Thickness",
+      "value": "14mm"
+    },
+    {
+      "label": "Weight",
+      "value": "7.8oz (average)"
+    },
+    {
+      "label": "Paddle Length",
+      "value": "16.5in"
+    },
+    {
+      "label": "Grip",
+      "value": "Feel-Tec Pure"
+    },
+    {
+      "label": "Grip Length",
+      "value": "5in"
+    },
+    {
+      "label": "Shape",
+      "value": "Magnus (Elongated)"
+    },
+    {
+      "label": "USAPA Approved",
+      "value": "Yes"
+    }
+  ],
+  "specifications": {
+    "Surface Material": "Carbon Abrasion (CAS)",
+    "Core Material": null,
+    "Core Type": "Polymer",
+    "Core Thickness": "14mm",
+    "Finish / Surface Texture": "Textured (Abrasion sand-blasted)",
+    "Edge Guard": "None (Edgeless Design - double frame carbon fiber)",
+    "Handle Grip": "Feel-Tec Pure",
+    "Grip Length": "5in",
+    "Grip Circumference": null,
+    "Paddle Length": "16.5in",
+    "Paddle Width": null,
+    "Paddle Shape": "Magnus (Elongated)",
+    "Total Weight": "7.8oz",
+    "Swing Weight": null,
+    "Sweet Spot Size": null,
+    "Spin Rating": "92",
+    "Power Rating": "92",
+    "Control Rating": "92",
+    "Noise Level / Certification": null,
+    "USAPA Approved": "Yes",
+    "Skill Level": "Advanced (Performance)",
+    "Playing Style": null,
+    "Usage": "Both",
+    "Warranty": "Extended 12-month warranty via NFC chip registration",
+    "Country of Origin": null
+  },
+  "faqs": [
+    {
+      "question": "What is the JOOLA Tyson McGuffin Magnus CAS 14mm Pickleball Paddle made of?",
+      "answer": "The paddle features a Carbon Abrasion Surface (CAS) with a double frame carbon fiber construction for edgeless durability, paired with a 14mm polymer core."
+    },
+    {
+      "question": "What are the key specifications of this paddle?",
+      "answer": "The paddle has an average weight of 7.8oz, a length of 16.5in, a 5in Feel-Tec Pure grip, and an elongated Magnus shape. It offers ratings of 92 for Control, Power, and Spin."
+    },
+    {
+      "question": "Who is this paddle designed for?",
+      "answer": "This paddle is designed for advanced and performance-level players, featuring signature athlete Tyson McGuffin's preferred specs with an elongated shape for added power and reach."
+    },
+    {
+      "question": "Is the Magnus CAS pickleball paddle USAPA approved?",
+      "answer": "Yes, the JOOLA Magnus CAS 14mm Pickleball Paddle is USAPA Approved for tournament play."
+    },
+    {
+      "question": "What is included in the box?",
+      "answer": "The package includes the JOOLA Tyson McGuffin Magnus CAS 14mm Pickleball Paddle. Note: this clearance item is marked as final sale."
+    },
+    {
+      "question": "What warranty does this paddle come with?",
+      "answer": "The paddle comes with an embedded NFC chip that unlocks an extended 12-month warranty through an easy-to-navigate registration process via JOOLA Connect."
+    },
+    {
+      "question": "What is the Carbon Abrasion Surface (CAS) technology?",
+      "answer": "CAS technology utilizes a multi-step abrasion sand-blasted process, creating a unique textured paddle surface designed to increase spin on every shot."
+    },
+    {
+      "question": "Does this paddle have an edge guard?",
+      "answer": "No, this paddle features JOOLA's first edgeless design, using double frame carbon fiber construction to increase durability and strength while creating a larger hitting area."
+    }
+  ],
+  "enrichment_metadata": {
+    "original_source_url": "https://joola.com/products/joola-tyson-mcguffin-magnus-cas-14-pickleball-paddle",
+    "amazon_source_url": null,
+    "enrichment_status": "original_only",
+    "image_generation_status": "skipped",
+    "lifestyle_images_generated": 0,
+    "feature_images_generated": 0,
+    "lifestyle_images_failed": 0,
+    "feature_images_failed": 0,
+    "scraped_images_kept": 7,
+    "fields_not_found": [
+      "Core Material",
+      "Grip Circumference",
+      "Paddle Width",
+      "Swing Weight",
+      "Sweet Spot Size",
+      "Noise Level / Certification",
+      "Playing Style",
+      "Country of Origin"
+    ]
+  }
+}
