@@ -20,7 +20,7 @@ LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 # NEW — Image Pipeline Config
 # ══════════════════════════════════════════════════════════
 
-# OpenRouter API key (for Gemini image generation)
+# OpenRouter API key (Gemini image generation)
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
 # Google Drive (for uploading generated images)
