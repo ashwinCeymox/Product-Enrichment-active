@@ -210,7 +210,7 @@ export default function CreateJob() {
                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-primary focus:border-primary sm:text-sm bg-white"
                   >
                     <option value="low">Low</option>
-                    <option value="normal">Medium</option>
+                    <option value="medium">Medium</option>
                     <option value="high">High</option>
                   </select>
                 </div>
