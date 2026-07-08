@@ -48,6 +48,9 @@ async def _run_image_pipeline(job_id: str):
         if not job or not job.product_data:
             return
             
+        if job.status in ["success", "aborted", "waiting_for_approval", "completed"]:
+            return
+            
         product = job.product_data
         base_sku = product.get("product_identity", {}).get("sku", job.task_name)
         # Ensure 100% filesystem isolation for this specific task
@@ -61,7 +64,7 @@ async def _run_image_pipeline(job_id: str):
         
         def check_cancel():
             db.refresh(job)
-            return job.status == "image_generation_stopped"
+            return job.status in ["image_generation_stopped", "success", "aborted"]
         
         def on_image_generated(group_type: str, index: int, prompt: str, img_data: dict, title: str = None):
             var_group = f"lifestyle_{index+1}" if group_type == "lifestyle" else f"feature_{index+1}"

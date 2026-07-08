@@ -23,13 +23,18 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 @router.get("/stats", response_model=DashboardStats)
 def get_dashboard_stats(db: Session = Depends(get_db)):
     total_jobs = db.query(ScrapeTask).count()
-    completed = db.query(ScrapeTask).filter(ScrapeTask.status == "success").count()
-    failed = db.query(ScrapeTask).filter(ScrapeTask.status == "failed").count()
+    completed = db.query(ScrapeTask).filter(ScrapeTask.status == "completed").count()
+    failed = db.query(ScrapeTask).filter(ScrapeTask.status.in_(["failed", "aborted"])).count()
 
     # Pending approvals breakdown
-    json_pending = db.query(ExtractedProduct).filter(ExtractedProduct.approval_status == "pending").count()
-    img_pending = db.query(ImageAsset).filter(ImageAsset.status == "pending").count()
-    html_pending = db.query(GeneratedPage).filter(GeneratedPage.status == "draft").count()
+    json_pending = db.query(ScrapeTask).filter(ScrapeTask.status == "waiting_for_approval").count()
+    img_pending = db.query(ScrapeTask).filter(ScrapeTask.status.in_([
+        "image_generation", 
+        "image_generation_stopped",
+        "image_generation_complete"
+    ])).count()
+    from app.models.generated_page import GeneratedPage
+    html_pending = db.query(GeneratedPage).filter(GeneratedPage.status == "pending").count()
 
     return DashboardStats(
         total_jobs=total_jobs,

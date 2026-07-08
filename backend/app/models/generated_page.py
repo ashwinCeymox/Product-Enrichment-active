@@ -7,7 +7,7 @@ edit, then finalize to produce a downloadable ZIP bundle.
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, ForeignKey, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, String, Text, LargeBinary
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -31,7 +31,7 @@ class GeneratedPage(Base):
     bundle_name = Column(String, nullable=False)       # e.g. "JOOLA-Magnus-CAS"
     html_content = Column(Text, nullable=True)          # full generated HTML
     status = Column(String, default="draft")            # draft / active / stable
-    finalized_zip_path = Column(Text, nullable=True)    # path to the final zip
+    finalized_zip = Column(LargeBinary, nullable=True)  # Store the actual zip data
 
     # ── Timestamps ───────────────────────────────────
     created_at = Column(DateTime(timezone=True), default=_utcnow)

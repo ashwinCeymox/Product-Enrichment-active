@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db, SessionLocal
@@ -8,6 +9,17 @@ import os
 import asyncio
 
 router = APIRouter(prefix="/images", tags=["Images"])
+
+@router.get("/serve", summary="Serve an image by local path")
+def serve_image(path: str):
+    if not os.path.exists(path):
+        # Fallback to check if it's a relative path from the project root
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        abs_path = os.path.join(project_root, path)
+        if not os.path.exists(abs_path):
+            raise HTTPException(status_code=404, detail="Image not found")
+        return FileResponse(abs_path)
+    return FileResponse(path)
 
 @router.get("/queue", summary="Get all jobs currently in image generation or review")
 def get_image_queue(db: Session = Depends(get_db)):
@@ -144,16 +156,36 @@ def approve_asset(asset_id: str, db: Session = Depends(get_db)):
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
     
-    asset.status = "approved"
-    
     # Reject others in the same group
     db.query(ImageAsset).filter(
         ImageAsset.scrape_task_id == asset.scrape_task_id,
         ImageAsset.variation_group == asset.variation_group,
         ImageAsset.id != asset_id
-    ).update({"status": "rejected"})
+    ).update({"status": "rejected"}, synchronize_session=False)
+    
+    # Approve this one
+    db.query(ImageAsset).filter(
+        ImageAsset.id == asset_id
+    ).update({"status": "approved"}, synchronize_session=False)
     
     db.commit()
+    
+    # Check if all groups have at least one approved asset
+    all_assets = db.query(ImageAsset).filter(ImageAsset.scrape_task_id == asset.scrape_task_id).all()
+    groups = {}
+    for a in all_assets:
+        groups.setdefault(a.variation_group, []).append(a)
+        
+    all_approved = True
+    for g, items in groups.items():
+        if not any(i.status == "approved" for i in items):
+            all_approved = False
+            break
+            
+    if all_approved:
+        # Auto finish if all are approved
+        finish_review(asset.scrape_task_id, db)
+        
     return {"status": "success", "message": "Asset approved"}
 
 @router.post("/job/{job_id}/stop", summary="Stop image generation for a job")
@@ -217,7 +249,109 @@ def finish_review(job_id: str, db: Session = Depends(get_db)):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     
-    # Check if all image groups have an approved asset? (Optional, skipping strict check to allow manual override)
+    # Embed approved images into the JSON product_data
+    assets = db.query(ImageAsset).filter(ImageAsset.scrape_task_id == job_id).all()
+    
+    grouped = {}
+    for a in assets:
+        if a.variation_group not in grouped:
+            grouped[a.variation_group] = []
+        grouped[a.variation_group].append(a)
+    
+    lifestyle_images = []
+    feature_images = []
+    
+    prod = job.product_data or {}
+    key_features = prod.get("key_features", [])
+    
+    for group_name, items in grouped.items():
+        approved = next((i for i in items if i.status == "approved"), None)
+        chosen = approved if approved else items[0]
+        
+        # Explicitly mark chosen as approved and others as rejected in DB
+        db.query(ImageAsset).filter(ImageAsset.id == chosen.id).update({"status": "approved"}, synchronize_session=False)
+        db.query(ImageAsset).filter(
+            ImageAsset.scrape_task_id == job_id,
+            ImageAsset.variation_group == group_name,
+            ImageAsset.id != chosen.id
+        ).update({"status": "rejected"}, synchronize_session=False)
+        
+        import os
+        filename = os.path.basename(chosen.storage_path)
+        
+        img_dict = {
+            "group": group_name,
+            "url": f"images/{filename}",
+            "local_path": chosen.storage_path,
+            "asset_name": chosen.asset_name,
+            "type": "lifestyle" if "lifestyle" in group_name else "feature"
+        }
+        
+        if "lifestyle" in group_name:
+            # Lifestyle images don't have a specific title/description from features
+            img_dict["alt"] = "Lifestyle Image"
+            lifestyle_images.append(img_dict)
+        else:
+            # For feature images, extract the corresponding title/desc from key_features
+            # group_name is e.g. "feature_1"
+            feature_idx = 0
+            try:
+                feature_idx = int(group_name.split("_")[1]) - 1
+            except Exception:
+                pass
+            
+            if feature_idx < len(key_features):
+                img_dict["title"] = key_features[feature_idx].get("title", "")
+                img_dict["description"] = key_features[feature_idx].get("description", "")
+                img_dict["alt"] = img_dict["title"]
+            else:
+                img_dict["title"] = f"Feature {feature_idx + 1}"
+                img_dict["description"] = "Premium feature"
+                img_dict["alt"] = img_dict["title"]
+                
+            feature_images.append(img_dict)
+        
+    if "images" not in prod:
+        prod["images"] = {}
+        
+    prod["images"]["lifestyle_images"] = lifestyle_images
+    prod["images"]["feature_images"] = feature_images
+    
+    # Remove old key if it exists from previous logic
+    if "ai_generated_images" in prod["images"]:
+        del prod["images"]["ai_generated_images"]
+    
+    from sqlalchemy.orm.attributes import flag_modified
+    job.product_data = prod
+    flag_modified(job, "product_data")
+    
+    # Check if ExtractedProduct exists
+    from app.models.extracted_product import ExtractedProduct
+    from app.models.generated_page import GeneratedPage
+    
+    extracted = db.query(ExtractedProduct).filter(ExtractedProduct.scrape_task_id == job.id).first()
+    if not extracted:
+        product_name = prod.get("product_identity", {}).get("product_name", job.task_name)
+        extracted = ExtractedProduct(
+            scrape_task_id=job.id,
+            name=product_name,
+            raw_json=prod,
+            approval_status="approved"
+        )
+        db.add(extracted)
+        db.flush() # to get extracted.id
+        
+    # Check if GeneratedPage exists
+    gen_page = db.query(GeneratedPage).filter(GeneratedPage.extracted_product_id == extracted.id).first()
+    if not gen_page:
+        gen_page = GeneratedPage(
+            extracted_product_id=extracted.id,
+            bundle_name=job.task_name,
+            status="pending"
+        )
+        db.add(gen_page)
+    else:
+        gen_page.status = "pending"
     
     job.status = "success"  # Ready for bundles
     job.progress = 100

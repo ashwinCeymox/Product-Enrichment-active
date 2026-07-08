@@ -7,6 +7,9 @@ import JsonReview from './pages/JsonReview';
 import ImageQueue from './pages/ImageQueue';
 import Login from './pages/Login';
 import ErrorLogs from './pages/ErrorLogs';
+import BundleReview from './pages/BundleReview';
+import Downloads from './pages/Downloads';
+import Settings from './pages/Settings';
 
 // Placeholders for other pages
 const Placeholder = ({ title }) => (
@@ -37,11 +40,12 @@ function AppRoutes() {
           </>
         )}
         
-        <Route path="bundles" element={<Placeholder title="Bundle Review" />} />
+        <Route path="bundles" element={<BundleReview />} />
+        <Route path="downloads" element={<Downloads />} />
         <Route path="error-logs" element={<ErrorLogs />} />
         
         {user.role === 'SUPERADMIN' && (
-          <Route path="settings" element={<Placeholder title="Settings" />} />
+          <Route path="settings" element={<Settings />} />
         )}
 
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -12,7 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   UserCircle,
-  LogOut
+  LogOut,
+  Download
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -22,6 +23,7 @@ const ALL_NAV_ITEMS = [
   { to: '/approvals/json', icon: CheckSquare, label: 'JSON Review', roles: ['SUPERADMIN', 'ADMIN'] },
   { to: '/approvals/images', icon: ImageIcon, label: 'Image Review', roles: ['SUPERADMIN', 'ADMIN'] },
   { to: '/bundles', icon: PackageCheck, label: 'Bundle Review', roles: ['SUPERADMIN', 'ADMIN', 'NORMALUSER'] },
+  { to: '/downloads', icon: Download, label: 'Downloads', roles: ['SUPERADMIN', 'ADMIN', 'NORMALUSER'] },
   { to: '/error-logs', icon: AlertTriangle, label: 'Error Logs', roles: ['SUPERADMIN', 'ADMIN', 'NORMALUSER'] },
   { to: '/settings', icon: Settings, label: 'Settings', roles: ['SUPERADMIN'] },
 ];

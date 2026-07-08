@@ -18,9 +18,12 @@ from typing import List, Optional
 
 import pandas as pd
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi.responses import StreamingResponse, HTMLResponse
 from pydantic import HttpUrl, ValidationError
 from sqlalchemy import func, case
 from sqlalchemy.orm import Session
+import httpx
+from urllib.parse import urlparse
 
 from app.database import get_db
 from app.models.scrape_task import ScrapeTask
@@ -264,6 +267,88 @@ def list_jobs(
     )
 
 
+@router.get("/proxy", summary="Proxy a URL to bypass X-Frame-Options")
+async def proxy_url(url: str):
+    """
+    Proxies a URL to strip X-Frame-Options and CSP headers so it can be embedded in an iframe.
+    Injects a <base> tag to ensure relative assets (CSS/JS) load correctly.
+    """
+    if not url.startswith("http"):
+        raise HTTPException(status_code=400, detail="Invalid URL")
+        
+    try:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            response = await client.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"})
+            
+            content_type = response.headers.get("content-type", "")
+            if "text/html" in content_type.lower():
+                html = response.text
+                
+                parsed_url = urlparse(url)
+                base_href = f"{parsed_url.scheme}://{parsed_url.netloc}/"
+                
+                import re
+                
+                # Strip all <script> tags to prevent SPA framebusting and CORS crashes
+                html = re.sub(r'<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>', '', html, flags=re.IGNORECASE)
+                
+                # Strip meta CSP if present in HTML
+                html = re.sub(r'<meta[^>]*http-equiv=["\']Content-Security-Policy["\'][^>]*>', '', html, flags=re.IGNORECASE)
+                
+                # Remove Shoplift A/B testing hiders
+                html = html.replace('shoplift-hide', '')
+                html = html.replace('opacity: 0 !important', '')
+                
+                # Trick the CSS into thinking JS is enabled so it doesn't hide .no-js elements
+                html = html.replace('class="no-js"', 'class="js"')
+
+                # Inject <base>, CSS overrides, and a lazy-load image fixer
+                injections = f"""
+                <base href="{base_href}">
+                <style>
+                    body, html, main, #MainContent, .page-wrapper {{
+                        opacity: 1 !important;
+                        visibility: visible !important;
+                        display: block !important;
+                    }}
+                    .lazyload, .lazyloading {{
+                        opacity: 1 !important;
+                    }}
+                </style>
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {{
+                        document.querySelectorAll('img[data-src], img[data-srcset], source[data-srcset]').forEach(function(el) {{
+                            if (el.hasAttribute('data-src')) el.setAttribute('src', el.getAttribute('data-src'));
+                            if (el.hasAttribute('data-srcset')) el.setAttribute('srcset', el.getAttribute('data-srcset'));
+                            el.classList.remove('lazyload');
+                            el.classList.add('lazyloaded');
+                        }});
+                    }});
+                </script>
+                """
+
+                if "<head" in html.lower():
+                    html = re.sub(r'(<head[^>]*>)', f'\\1{injections}', html, flags=re.IGNORECASE, count=1)
+                else:
+                    html = f'<head>{injections}</head>' + html
+                    
+                headers = dict(response.headers)
+                headers.pop("x-frame-options", None)
+                headers.pop("content-security-policy", None)
+                headers.pop("content-length", None)
+                headers.pop("transfer-encoding", None)
+                
+                return HTMLResponse(content=html, status_code=response.status_code, headers=headers)
+            else:
+                return StreamingResponse(
+                    response.aiter_raw(),
+                    status_code=response.status_code,
+                    headers={k: v for k, v in response.headers.items() if k.lower() not in ["x-frame-options", "content-security-policy", "content-length", "transfer-encoding"]}
+                )
+    except Exception as e:
+        return HTMLResponse(content=f"<html><body><h2>Failed to proxy URL: {str(e)}</h2></body></html>", status_code=500)
+
+
 @router.get("/{batch_id}", response_model=JobListResponse, summary="Get all jobs for a batch")
 def get_batch_jobs(batch_id: str, db: Session = Depends(get_db)):
     jobs = db.query(ScrapeTask).filter(ScrapeTask.batch_id == batch_id).all()
@@ -349,6 +434,146 @@ def delete_job(job_id: str, db: Session = Depends(get_db)):
         db.commit()
         
     return {"status": "success", "message": "Job updated"}
+
+
+import zipfile
+import io
+import json
+import os
+import copy
+from fastapi.responses import StreamingResponse
+
+@router.get("/{job_id}/download", summary="Download the finalized bundle as a ZIP")
+def download_bundle(job_id: str, db: Session = Depends(get_db)):
+    job = db.query(ScrapeTask).filter(ScrapeTask.id == job_id).first()
+    if not job or job.status != "success":
+        raise HTTPException(status_code=404, detail="Job not found or not finalized")
+
+    # Deepcopy to avoid modifying the DB object in memory
+    prod_data = copy.deepcopy(job.product_data or {})
+    images_dict = prod_data.get("images", {})
+    ai_images = images_dict.get("lifestyle_images", []) + images_dict.get("feature_images", [])
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+        # Add images
+        for img in ai_images:
+            local_path = img.get("local_path")
+            url = img.get("url") # "images/filename.png"
+            if local_path and os.path.exists(local_path):
+                zip_file.write(local_path, arcname=url)
+            
+            if "local_path" in img:
+                del img["local_path"]
+
+        # Add JSON
+        json_str = json.dumps(prod_data, indent=2)
+        safe_name = job.task_name.replace(" ", "_").replace("/", "-")
+        zip_file.writestr(f"{safe_name}.json", json_str)
+
+    zip_buffer.seek(0)
+    headers = {
+        "Content-Disposition": f"attachment; filename={safe_name}_bundle.zip"
+    }
+    return StreamingResponse(zip_buffer, media_type="application/zip", headers=headers)
+
+@router.post("/{job_id}/update_data", summary="Update product data without finalizing")
+def update_job_data(job_id: str, payload: ApprovalRequest, db: Session = Depends(get_db)):
+    job = db.query(ScrapeTask).filter(ScrapeTask.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    if payload.product_data is not None:
+        from sqlalchemy.orm.attributes import flag_modified
+        job.product_data = payload.product_data
+        flag_modified(job, "product_data")
+        db.commit()
+    return {"status": "success", "message": "Product data updated"}
+
+@router.post("/{job_id}/finalize", summary="Finalize JSON and Bundle")
+def finalize_job(job_id: str, payload: ApprovalRequest, db: Session = Depends(get_db)):
+    job = db.query(ScrapeTask).filter(ScrapeTask.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    if payload.product_data is not None:
+        job.product_data = payload.product_data
+        
+    job.status = "completed"
+    job.append_activity("finalized", "Bundle finalized and ready for download")
+    
+    # Generate the ZIP file permanently to disk so Downloads can reference it
+    prod_data = copy.deepcopy(job.product_data or {})
+    images_dict = prod_data.get("images", {})
+    ai_images = images_dict.get("lifestyle_images", []) + images_dict.get("feature_images", [])
+    
+    safe_name = job.task_name.replace(" ", "_").replace("/", "-")
+    zip_filename = f"{safe_name}_bundle_{str(job.id)[:8]}.zip"
+    
+    # Generate the ZIP file in memory
+    import io
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for img in ai_images:
+            local_path = img.get("local_path")
+            url = img.get("url") # "images/filename.png"
+            if local_path and os.path.exists(local_path):
+                zip_file.write(local_path, arcname=url)
+            
+            if "local_path" in img:
+                del img["local_path"]
+                
+        json_str = json.dumps(prod_data, indent=2)
+        zip_file.writestr(f"{safe_name}.json", json_str)
+        
+    zip_bytes = zip_buffer.getvalue()
+    size_mb = round(len(zip_bytes) / (1024*1024), 2)
+        
+    # Update result_zip_file metadata in DB
+    from sqlalchemy.orm.attributes import flag_modified
+    job.result_zip_file = {
+        "url": f"/jobs/{job.id}/download-zip", 
+        "filename": zip_filename,
+        "size": f"{size_mb} MB"
+    }
+    flag_modified(job, "result_zip_file")
+    
+    from app.models.extracted_product import ExtractedProduct
+    from app.models.generated_page import GeneratedPage
+    extracted = db.query(ExtractedProduct).filter(ExtractedProduct.scrape_task_id == job.id).first()
+    if extracted:
+        gen_page = db.query(GeneratedPage).filter(GeneratedPage.extracted_product_id == extracted.id).first()
+        if gen_page:
+            gen_page.status = "approved"
+            gen_page.finalized_zip = zip_bytes
+            gen_page.html_content = payload.product_data.get("html", "<!-- Placeholder HTML Content -->") if payload.product_data else None
+            
+    db.commit()
+    return {"status": "success", "message": "Bundle finalized and saved"}
+
+@router.get("/{job_id}/download-zip", summary="Download the generated ZIP file")
+def download_generated_zip(job_id: str, db: Session = Depends(get_db)):
+    job = db.query(ScrapeTask).filter(ScrapeTask.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    from app.models.extracted_product import ExtractedProduct
+    from app.models.generated_page import GeneratedPage
+    
+    extracted = db.query(ExtractedProduct).filter(ExtractedProduct.scrape_task_id == job_id).first()
+    if extracted:
+        gen_page = db.query(GeneratedPage).filter(GeneratedPage.extracted_product_id == extracted.id).first()
+        if gen_page and gen_page.finalized_zip:
+            import io
+            from fastapi.responses import StreamingResponse
+            zip_buffer = io.BytesIO(gen_page.finalized_zip)
+            zip_buffer.seek(0)
+            filename = job.result_zip_file.get("filename", "bundle.zip") if job.result_zip_file else "bundle.zip"
+            headers = {"Content-Disposition": f"attachment; filename={filename}"}
+            return StreamingResponse(zip_buffer, media_type="application/zip", headers=headers)
+            
+    raise HTTPException(status_code=404, detail="Zip file not found in database")
+
 
 
 @router.get("/stats/status", response_model=list[TaskStatus], summary="Get status breakdown by task")

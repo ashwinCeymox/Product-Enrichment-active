@@ -16,7 +16,7 @@ from app.database import Base, engine
 import app.models  # noqa: F401
 
 # Import routers
-from app.routers import health, jobs, dashboard, images
+from app.routers import health, jobs, dashboard, images, settings
 
 # ── Create tables (dev convenience — use Alembic in production) ──
 Base.metadata.create_all(bind=engine)
@@ -51,6 +51,7 @@ app.include_router(health.router)
 app.include_router(jobs.router)
 app.include_router(dashboard.router)
 app.include_router(images.router)
+app.include_router(settings.router)
 
 
 @app.get("/", tags=["Root"])
